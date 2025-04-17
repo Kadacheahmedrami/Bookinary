@@ -1,0 +1,25 @@
+version: '3.8'
+services:
+  backend:
+    build:
+      context: .
+      dockerfile: Dockerfile.backend
+    volumes:
+      - ./uploads:/app/uploads
+      - ./processed:/app/processed
+    ports:
+      - "5000:5000"
+    
+  frontend:
+    build:
+      context: ./website
+      dockerfile: Dockerfile
+    environment:
+      # if your Next.js API routes call the Flask server:
+      - BACKEND_URL=http://backend:5000
+    volumes:
+      - ./website:/usr/src/app
+    ports:
+      - "3000:3000"
+    depends_on:
+      - backend
