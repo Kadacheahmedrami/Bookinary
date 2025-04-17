@@ -1,4 +1,5 @@
 from flask import Flask, request, jsonify, send_from_directory
+from flask_cors import CORS
 from PIL import Image
 import os
 import uuid
@@ -6,6 +7,8 @@ import cv2
 import numpy as np
 
 app = Flask(__name__)
+# Enable CORS for all routes
+CORS(app)
 
 # Configuration
 UPLOAD_FOLDER = 'uploads'
@@ -208,6 +211,11 @@ def upload_image():
 def serve_processed_image(filename):
     return send_from_directory(PROCESSED_FOLDER, filename)
 
+
+@app.route('/health', methods=['GET'])
+def health_check():
+    return jsonify({"status": "ok"}), 200
+
 # Add a simple HTML interface for testing
 @app.route('/', methods=['GET'])
 def index():
@@ -291,4 +299,4 @@ def index():
     '''
 
 if __name__ == '__main__':
-    app.run(debug=True)
+    app.run(host="0.0.0.0", port=5000, debug=True)

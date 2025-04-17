@@ -1,20 +1,43 @@
-# Use Node LTS
-FROM node:18-alpine
+FROM node:18-alpine AS base
+WORKDIR /app
 
-# Create app directory
-WORKDIR /usr/src/app
-
-# Copy package manifests
-COPY package.json pnpm-lock.yaml ./
-
-# Install dependencies
+# Install dependencies only when needed
+FROM base AS deps
+# Copy package files
+COPY package.json ./
+COPY pnpm-lock.yaml ./
+# Install dependencies using npm with legacy peer deps flag
 RUN npm install --legacy-peer-deps
 
-# Copy all sources
+# Rebuild the source code only when needed
+FROM base AS builder
+WORKDIR /app
+
+# Copy dependencies
+COPY --from=deps /app/node_modules ./node_modules
+COPY --from=deps /app/package.json ./
+
+# Copy source code
 COPY . .
 
-# Expose Next.js port
-EXPOSE 3000
+# Build application
+RUN npm run build
 
-# Start Next.js in development mode (or change to "npm run build && npm start" for production)
-CMD ["npm", "run", "dev"]
+# Production image, copy all the files and run next
+FROM base AS runner
+WORKDIR /app
+
+ENV NODE_ENV production
+
+# Install only production dependencies with legacy-peer-deps flag
+COPY --from=deps /app/package.json ./
+RUN npm install --production --legacy-peer-deps
+
+# Copy built application and configuration files
+COPY --from=builder /app/.next ./.next
+COPY --from=builder /app/public ./public
+
+
+
+# Start the application
+CMD ["npm", "start"]

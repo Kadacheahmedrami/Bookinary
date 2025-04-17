@@ -1,5 +1,6 @@
 version: '3.8'
 services:
+
   backend:
     build:
       context: .
@@ -9,17 +10,27 @@ services:
       - ./processed:/app/processed
     ports:
       - "5000:5000"
-    
+    # Make sure Flask binds on 0.0.0.0, e.g. in Dockerfile.backend:
+    # CMD ["flask", "run", "--host=0.0.0.0", "--port=5000"]
+
   frontend:
     build:
       context: ./website
       dockerfile: Dockerfile
     environment:
-      # if your Next.js API routes call the Flask server:
-      - BACKEND_URL=http://backend:5000
+      - BACKEND_URL=http://backend:5000    # ← point at the service name
+      
     volumes:
       - ./website:/usr/src/app
     ports:
       - "3000:3000"
     depends_on:
-      - backend
+      backend:
+        condition: service_healthy        # optional, see below
+
+    # (Optional) add a healthcheck on the backend so Compose can delay starting frontend
+    # healthcheck:
+    #   test: ["CMD", "curl", "-f", "http://localhost:5000/health"]
+    #   interval: 5s
+    #   timeout: 2s
+    #   retries: 5

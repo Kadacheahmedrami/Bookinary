@@ -1,7 +1,6 @@
 "use client"
 
-import type React from "react"
-
+import React from "react"
 import { useState } from "react"
 import { Upload, BookOpen, ImageIcon, Loader2 } from "lucide-react"
 import { Button } from "@/components/ui/button"
@@ -45,7 +44,7 @@ export default function Home() {
       const formData = new FormData()
       formData.append("image", file)
 
-      // Use our Next.js API route instead of directly calling the Flask server
+      // Proxy to our Next.js API route
       const response = await fetch("/api/process", {
         method: "POST",
         body: formData,
@@ -58,8 +57,9 @@ export default function Home() {
       const data = await response.json()
 
       if (data.success) {
-        // Construct the full URL to the processed image
-        setProcessedImage(`http://localhost:5000${data.url}`)
+        // Full URL using Python server base
+        console.log(`${process.env.NEXT_PUBLIC_BACKEND_URL || ''}${data.url}` )
+        setProcessedImage(`${process.env.NEXT_PUBLIC_BACKEND_URL || ''}${data.url}`)
       } else {
         setError(data.message || "Failed to process image")
       }
